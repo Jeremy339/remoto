@@ -235,15 +235,21 @@
         // Pegar texto a la PC remota
         document.getElementById('pasteBtn').addEventListener('click', async () => {
             try {
-                const text = await navigator.clipboard.readText();
-                await fetch('/set_clipboard', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ text: text })
-                });
-                alert("Texto pegado en la PC remota!");
+                // 1. Mostrar un cuadro de texto para que el usuario pegue manualmente
+                const userText = prompt("Pega aquí el texto que quieres enviar a la PC remota (Ctrl+V):");
+
+                if (userText !== null) {  // Si el usuario no cancela
+                    // 2. Enviar el texto al servidor
+                    await fetch('/set_clipboard', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ text: userText })
+                    });
+                    alert("¡Texto enviado a la PC remota! Pega (Ctrl+V) allí.");
+                }
             } catch (error) {
                 console.error("Error al pegar:", error);
+                alert("Error al enviar el texto. Intenta nuevamente.");
             }
         });
     </script>
