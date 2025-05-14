@@ -225,17 +225,11 @@
 
         // Copiar texto desde la PC remota
         document.getElementById('copyBtn').addEventListener('click', async () => {
-            try {
-                const response = await fetch('/get_clipboard');
-                const data = await response.json();
-                document.getElementById('clipboardText').value = data.text;
+            const response = await fetch('/get_clipboard');
+            const data = await response.json();
 
-                // Copiar automáticamente al portapapeles local
-                navigator.clipboard.writeText(data.text)
-                    .then(() => alert("Texto copiado al portapapeles local!"));
-            } catch (error) {
-                console.error("Error al copiar:", error);
-            }
+            // Mostrar el texto en un prompt para copia manual
+            prompt("Copia este texto (Ctrl+C):", data.text);
         });
 
         // Pegar texto a la PC remota
