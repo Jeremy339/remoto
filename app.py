@@ -12,6 +12,7 @@ from flask import Flask, Response, render_template, request, session, redirect, 
 from flask_socketio import SocketIO
 from cryptography.fernet import Fernet
 from pynput.mouse import Button, Controller as MouseController
+from pynput.keyboard import Controller, Key
 from screeninfo import get_monitors  # Añade esta importación
 
 
@@ -21,6 +22,7 @@ app.secret_key = secrets.token_hex(32)
 socketio = SocketIO(app, cors_allowed_origins="*")
 mouse = MouseController()
 clipboard_text = ""
+keyboard = Controller()
 
 # Configuración de seguridad
 AUTH_TOKEN = hashlib.sha256(secrets.token_bytes(32)).hexdigest()
@@ -245,7 +247,48 @@ def handle_mouse_event(data):
             mouse.release(button)  # Usar el objeto Button mapeado
     except Exception as e:
         print(f"Error en evento de mouse: {e}")
+# ------------------------- Escribir con Teclado -------------------
+@socketio.on('keyboard_event')
+def handle_keyboard_event(data):
+    try:
+        key = data['key']
         
+        # Mapear teclas especiales (ej: "Control" -> Key.ctrl)
+        special_keys = {
+            'Control': Key.ctrl,
+            'Shift': Key.shift,
+            'Alt': Key.alt,
+            'CapsLock': Key.caps_lock,
+            'Enter': Key.enter,
+            ' ': Key.space  # Barra espaciadora
+        }
+        
+        # Simular tecla
+        if data['type'] == 'keydown':
+            if key in special_keys:
+                keyboard.press(special_keys[key])
+            else:
+                keyboard.press(key)
+                
+        elif data['type'] == 'keyup':
+            if key in special_keys:
+                keyboard.release(special_keys[key])
+            else:
+                keyboard.release(key)
+                
+        # Combinación Ctrl+C/V
+        if data.get('ctrlKey') and key.lower() == 'c':
+            with keyboard.pressed(Key.ctrl):
+                keyboard.press('c')
+                keyboard.release('c')
+                
+        if data.get('ctrlKey') and key.lower() == 'v':
+            with keyboard.pressed(Key.ctrl):
+                keyboard.press('v')
+                keyboard.release('v')
+                
+    except Exception as e:
+        print(f"Error en evento de teclado: {e}")
 # ------------------------- Inicialización -------------------------
 if __name__ == '__main__':
     # Iniciar servidor de transferencia de archivos

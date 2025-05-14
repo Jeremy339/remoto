@@ -252,6 +252,31 @@
                 alert("Error al enviar el texto. Intenta nuevamente.");
             }
         });
+
+
+        // Agregar teclas
+
+        document.addEventListener('keydown', (e) => {
+            // Enviar evento de tecla al servidor (incluye teclas especiales)
+            socket.emit('keyboard_event', {
+                type: 'keydown',
+                key: e.key,
+                ctrlKey: e.ctrlKey,  // Para detectar Ctrl+C/V
+                shiftKey: e.shiftKey,
+                altKey: e.altKey
+            });
+
+            // Prevenir comportamiento predeterminado (opcional)
+            if (e.ctrlKey && (e.key === 'c' || e.key === 'v')) {
+                e.preventDefault();
+            }
+        });
+
+        // Opcional: Evento para liberar teclas
+        document.addEventListener('keyup', (e) => {
+            socket.emit('keyboard_event', { type: 'keyup', key: e.key });
+        });
+
     </script>
 </body>
 
