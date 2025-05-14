@@ -11,7 +11,7 @@ from PIL import ImageGrab
 from flask import Flask, Response, render_template, request, session, redirect, url_for
 from flask_socketio import SocketIO
 from cryptography.fernet import Fernet
-from pynput.mouse import Controller as MouseController
+from pynput.mouse import Button, Controller as MouseController
 
 
 # Configuración inicial
