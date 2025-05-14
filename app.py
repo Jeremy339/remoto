@@ -48,7 +48,7 @@ def get_local_ips():
     try:
         # Esto conecta "falsamente" a una IP pública para descubrir la IP local
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(("8.8.8.8", 80))  # Google DNS, no se envía ningún dato
+        s.connect(("8.8.8.8", 80)) 
         ip = s.getsockname()[0]
         s.close()
         if ip != "127.0.0.1":
@@ -58,10 +58,9 @@ def get_local_ips():
     return ips or ["127.0.0.1"]
 
 # ------------------------- Ajustar Res ---------------------------
-# Agrega esta ruta para obtener la resolución
 @app.route('/get_resolution')
 def get_resolution():
-    monitor = get_monitors()[0]  # Pantalla principal
+    monitor = get_monitors()[0]
     return {'width': monitor.width, 'height': monitor.height}
 
 # ------------------------- Autenticación -------------------------
@@ -114,9 +113,9 @@ def capture_screen():
             img = ImageGrab.grab()
             buffer = BytesIO()
             img.save(buffer, format='JPEG', quality=JPEG_QUALITY)
-            img_str = base64.b64encode(buffer.getvalue()).decode('utf-8')  # Base64 directo
+            img_str = base64.b64encode(buffer.getvalue()).decode('utf-8')
             
-            # Envía SIN cifrar (comenta esta línea si usas Opción 2)
+            # Se envía sin cifrar, cifrando da errores de autorización
             socketio.emit('screen_update', {'image': img_str})
             
             time.sleep(SCREENSHOT_INTERVAL)
@@ -149,7 +148,7 @@ def handle_connect():
         }
         print(f"Cliente conectado: {client_id}")
         
-        # Iniciar captura de pantalla si es el primer cliente
+        # Se inicia la captura de pantalla
         if len(connected_clients) == 1:
             threading.Thread(target=capture_screen, daemon=True).start()
 
@@ -159,6 +158,7 @@ def handle_disconnect():
     if client_id in connected_clients:
         connected_clients.pop(client_id)
         print(f"Cliente desconectado: {client_id}")
+        
 # -------------------------- Recibir Texto ------------------------------------
 @app.route('/set_clipboard', methods=['POST'])
 def set_clipboard():
@@ -169,10 +169,10 @@ def set_clipboard():
 @app.route('/get_clipboard', methods=['GET'])
 def get_clipboard():
     return jsonify({"text": clipboard_text})
-
+"""
 # ------------------------- Transferencia de Archivos -------------------------
 def handle_file_transfer():
-    """Servidor de transferencia de archivos con sockets TCP"""
+    #Transfiere archivos con sockets TCP
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         s.bind(('0.0.0.0', FILE_TRANSFER_PORT))
@@ -225,33 +225,36 @@ def handle_file_transfer():
                 conn.send(b'TRANSFER_ERROR')
             finally:
                 conn.close()
+"""
 # ------------------------- Mover Mouse ----------------------------
 @socketio.on('mouse_event')
 def handle_mouse_event(data):
     try:
         x, y = data['x'], data['y']
         
-        # Mapear el número del botón al objeto Button de pynput
+        # Se configura las teclas del mouse
         button_map = {
-            0: Button.left,   # Clic izquierdo
-            1: Button.right,  # Clic derecho
-            2: Button.middle  # Clic central
+            0: Button.left,   
+            1: Button.right,  
+            2: Button.middle  
         }
-        button = button_map.get(data.get('button', 0), Button.left)  # Default: izquierdo
+        button = button_map.get(data.get('button', 0), Button.left) 
         
         if data['type'] == 'move':
             mouse.position = (x, y)
         elif data['type'] == 'down':
-            mouse.press(button)  # Usar el objeto Button mapeado
+            mouse.press(button) 
         elif data['type'] == 'up':
-            mouse.release(button)  # Usar el objeto Button mapeado
+            mouse.release(button) 
     except Exception as e:
         print(f"Error en evento de mouse: {e}")
+
+# Teclado
 @socketio.on('keyboard_event')
 def handle_keyboard_event(data):
     try:
         key = data['key']
-        action_type = data['type']  # 'keydown' o 'keyup'
+        action_type = data['type']
         
         # Mapeo de teclas especiales
         special_keys = {
@@ -277,13 +280,12 @@ def handle_keyboard_event(data):
         if key in special_keys:
             key_action(special_keys[key])
         else:
-            # Si la tecla es estándar (no especial)
             try:
                 key_action(key)
             except ValueError:
                 print(f"Tecla no reconocida: {key}")
 
-        # Manejo de combinaciones de teclas (Ctrl+C / Ctrl+V)
+        # Aqui se manejan las combinaciones de teclas
         if data.get('ctrlKey'):
             if key.lower() == 'c':  # Ctrl+C
                 with keyboard.pressed(Key.ctrl):
@@ -299,7 +301,7 @@ def handle_keyboard_event(data):
 # ------------------------- Inicialización -------------------------
 if __name__ == '__main__':
     # Iniciar servidor de transferencia de archivos
-    threading.Thread(target=handle_file_transfer, daemon=True).start()
+    """threading.Thread(target=handle_file_transfer, daemon=True).start()"""
     
     # Mostrar información de conexión
     local_ips = get_local_ips()
@@ -311,4 +313,4 @@ if __name__ == '__main__':
     print("\nPresiona Ctrl+C para detener el servidor\n")
     
     # Iniciar servidor web
-    socketio.run(app, host='0.0.0.0', port=5000, allow_unsafe_werkzeug=True)     # Iniciar servidor web
+    socketio.run(app, host='0.0.0.0', port=5000, allow_unsafe_werkzeug=True)

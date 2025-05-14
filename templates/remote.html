@@ -98,28 +98,13 @@
         const refreshBtn = document.getElementById('refreshBtn');
         const logoutBtn = document.getElementById('logoutBtn');
         const statusDiv = document.getElementById('status');
-        // Declarar como let para permitir reasignación
-        let REMOTE_SCREEN_WIDTH = window.screen.width;  // Valor temporal
-        let REMOTE_SCREEN_HEIGHT = window.screen.height; // Valor temporal
-
-        // Obtener la resolución real de la pantalla remota al cargar la página
-        fetch('/get_resolution')
-            .then(response => response.json())
-            .then(data => {
-                REMOTE_SCREEN_WIDTH = data.width;
-                REMOTE_SCREEN_HEIGHT = data.height;
-                console.log("Resolución remota configurada:", REMOTE_SCREEN_WIDTH, "x", REMOTE_SCREEN_HEIGHT);
-            })
-            .catch(error => {
-                console.error("Error al obtener resolución:", error);
-                // Usar valores por defecto si falla (opcional)
-            });
-
+        let REMOTE_SCREEN_WIDTH = window.screen.width;
+        let REMOTE_SCREEN_HEIGHT = window.screen.height;
 
         // MÁXIMO TAMAÑO DE ARCHIVO (por ejemplo, 5 MB)
         const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
-        // Obtener la resolución real de la pantalla remota al cargar la página
+        // Se obtiene la res real de la pantalla que se transmite
         fetch('/get_resolution')
             .then(response => response.json())
             .then(data => {
@@ -135,7 +120,6 @@
         // Mostrar imagen remota
         socket.on('screen_update', function (data) {
             try {
-                // Si `data.image` ya es base64, no necesitas `atob`
                 screenImg.src = 'data:image/jpeg;base64,' + data.image;
                 statusDiv.textContent = `Conectado - ${new Date().toLocaleTimeString()}`;
             } catch (e) {
@@ -149,6 +133,7 @@
         logoutBtn.addEventListener('click', () => window.location.href = '/logout');
         refreshBtn.addEventListener('click', () => location.reload());
 
+        /*
         // Manejo de archivo
         fileInput.addEventListener('change', async (e) => {
             const file = e.target.files[0];
@@ -184,6 +169,7 @@
             };
             reader.readAsArrayBuffer(file);
         });
+        */
 
         function formatBytes(bytes) {
             if (bytes === 0) return '0 Bytes';
@@ -192,18 +178,17 @@
             const i = Math.floor(Math.log(bytes) / Math.log(k));
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         }
-        // Ajustar Pantalla
+        // Para el botón de ajustar pantalla en el front
         document.getElementById('fullscreenBtn').addEventListener('click', () => {
             const img = document.getElementById('remoteScreen');
             if (img.requestFullscreen) {
-                img.requestFullscreen();  // Mostrar en pantalla completa
+                img.requestFullscreen();  
             }
         });
 
-        // --- Reemplaza los eventos del mouse por esto ---
+        // Funciones de mouse
         document.getElementById('remoteScreen').addEventListener('mousedown', (e) => {
             const rect = e.target.getBoundingClientRect();
-            // Normalizar coordenadas (escalar a la resolución remota)
             const x = ((e.clientX - rect.left) / rect.width) * REMOTE_SCREEN_WIDTH;
             const y = ((e.clientY - rect.top) / rect.height) * REMOTE_SCREEN_HEIGHT;
             socket.emit('mouse_event', { type: 'down', x, y, button: e.button });
@@ -223,6 +208,7 @@
             socket.emit('mouse_event', { type: 'move', x, y });
         });
 
+        /*
         // Copiar texto desde la PC remota
         document.getElementById('copyBtn').addEventListener('click', async () => {
             const response = await fetch('/get_clipboard');
@@ -252,16 +238,16 @@
                 alert("Error al enviar el texto. Intenta nuevamente.");
             }
         });
+        */
 
 
-        // Agregar teclas
+        // Agregar teclas y las teclas que son especiales
 
         document.addEventListener('keydown', (e) => {
-            // Enviar evento de tecla al servidor (incluye teclas especiales)
             socket.emit('keyboard_event', {
                 type: 'keydown',
                 key: e.key,
-                ctrlKey: e.ctrlKey,  // Para detectar Ctrl+C/V
+                ctrlKey: e.ctrlKey, 
                 shiftKey: e.shiftKey,
                 altKey: e.altKey
             });
