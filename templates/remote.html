@@ -50,6 +50,24 @@
             display: flex;
             justify-content: space-between;
         }
+
+        #remoteScreen {
+            display: block;
+            width: auto;
+            /* Ancho natural (sin forzar el 100%) */
+            height: auto;
+            /* Altura natural */
+            max-width: 100%;
+            /* Máximo ancho disponible */
+            max-height: 90vh;
+            /* Altura máxima (90% del viewport) */
+            object-fit: contain;
+            /* Mantiene relación de aspecto */
+            margin: 10px auto;
+            border: 2px solid #444;
+            overflow: auto;
+            /* Permite scroll si la imagen es muy grande */
+        }
     </style>
 </head>
 
@@ -57,6 +75,7 @@
     <div class="header">
         <h2>Escritorio Remoto</h2>
         <button id="logoutBtn">Cerrar Sesión</button>
+        <button id="fullscreenBtn">Pantalla Completa</button>
     </div>
 
     <img id="remoteScreen" src="">
@@ -170,6 +189,13 @@
             const i = Math.floor(Math.log(bytes) / Math.log(k));
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         }
+        // Ajustar Pantalla
+        document.getElementById('fullscreenBtn').addEventListener('click', () => {
+            const img = document.getElementById('remoteScreen');
+            if (img.requestFullscreen) {
+                img.requestFullscreen();  // Mostrar en pantalla completa
+            }
+        });
 
         // --- Reemplaza los eventos del mouse por esto ---
         document.getElementById('remoteScreen').addEventListener('mousedown', (e) => {
