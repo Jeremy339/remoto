@@ -247,46 +247,53 @@ def handle_mouse_event(data):
             mouse.release(button)  # Usar el objeto Button mapeado
     except Exception as e:
         print(f"Error en evento de mouse: {e}")
-# ------------------------- Escribir con Teclado -------------------
 @socketio.on('keyboard_event')
 def handle_keyboard_event(data):
     try:
         key = data['key']
+        action_type = data['type']  # 'keydown' o 'keyup'
         
-        # Mapear teclas especiales (ej: "Control" -> Key.ctrl)
+        # Mapeo de teclas especiales
         special_keys = {
             'Control': Key.ctrl,
             'Shift': Key.shift,
             'Alt': Key.alt,
             'CapsLock': Key.caps_lock,
             'Enter': Key.enter,
-            ' ': Key.space  # Barra espaciadora
+            ' ': Key.space,  # Barra espaciadora
+            'Backspace': Key.backspace,
+            'Escape': Key.esc,
+            'Tab': Key.tab,
+            'Delete': Key.delete,
+            'ArrowLeft': Key.left,
+            'ArrowRight': Key.right,
+            'ArrowUp': Key.up,
+            'ArrowDown': Key.down,
         }
         
-        # Simular tecla
-        if data['type'] == 'keydown':
-            if key in special_keys:
-                keyboard.press(special_keys[key])
-            else:
-                keyboard.press(key)
-                
-        elif data['type'] == 'keyup':
-            if key in special_keys:
-                keyboard.release(special_keys[key])
-            else:
-                keyboard.release(key)
-                
-        # Combinación Ctrl+C/V
-        if data.get('ctrlKey') and key.lower() == 'c':
-            with keyboard.pressed(Key.ctrl):
-                keyboard.press('c')
-                keyboard.release('c')
-                
-        if data.get('ctrlKey') and key.lower() == 'v':
-            with keyboard.pressed(Key.ctrl):
-                keyboard.press('v')
-                keyboard.release('v')
-                
+        # Acción del teclado (presionar o soltar)
+        key_action = keyboard.press if action_type == 'keydown' else keyboard.release
+        
+        if key in special_keys:
+            key_action(special_keys[key])
+        else:
+            # Si la tecla es estándar (no especial)
+            try:
+                key_action(key)
+            except ValueError:
+                print(f"Tecla no reconocida: {key}")
+
+        # Manejo de combinaciones de teclas (Ctrl+C / Ctrl+V)
+        if data.get('ctrlKey'):
+            if key.lower() == 'c':  # Ctrl+C
+                with keyboard.pressed(Key.ctrl):
+                    keyboard.press('c')
+                    keyboard.release('c')
+            elif key.lower() == 'v':  # Ctrl+V
+                with keyboard.pressed(Key.ctrl):
+                    keyboard.press('v')
+                    keyboard.release('v')
+
     except Exception as e:
         print(f"Error en evento de teclado: {e}")
 # ------------------------- Inicialización -------------------------
@@ -304,4 +311,4 @@ if __name__ == '__main__':
     print("\nPresiona Ctrl+C para detener el servidor\n")
     
     # Iniciar servidor web
-    socketio.run(app, host='0.0.0.0', port=5000, allow_unsafe_werkzeug=True)
+    socketio.run(app, host='0.0.0.0', port=5000, allow_unsafe_werkzeug=True)     # Iniciar servidor web
