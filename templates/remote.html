@@ -76,6 +76,9 @@
         <h2>Escritorio Remoto</h2>
         <button id="logoutBtn">Cerrar Sesión</button>
         <button id="fullscreenBtn">Pantalla Completa</button>
+        <button id="copyBtn">Copiar desde remoto</button>
+        <button id="pasteBtn">Pegar en remoto</button>
+        <textarea id="clipboardText" placeholder="Texto copiado aparecerá aquí"></textarea>
     </div>
 
     <img id="remoteScreen" src="">
@@ -218,6 +221,36 @@
             const x = ((e.clientX - rect.left) / rect.width) * REMOTE_SCREEN_WIDTH;
             const y = ((e.clientY - rect.top) / rect.height) * REMOTE_SCREEN_HEIGHT;
             socket.emit('mouse_event', { type: 'move', x, y });
+        });
+
+        // Copiar texto desde la PC remota
+        document.getElementById('copyBtn').addEventListener('click', async () => {
+            try {
+                const response = await fetch('/get_clipboard');
+                const data = await response.json();
+                document.getElementById('clipboardText').value = data.text;
+
+                // Copiar automáticamente al portapapeles local
+                navigator.clipboard.writeText(data.text)
+                    .then(() => alert("Texto copiado al portapapeles local!"));
+            } catch (error) {
+                console.error("Error al copiar:", error);
+            }
+        });
+
+        // Pegar texto a la PC remota
+        document.getElementById('pasteBtn').addEventListener('click', async () => {
+            try {
+                const text = await navigator.clipboard.readText();
+                await fetch('/set_clipboard', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: text })
+                });
+                alert("Texto pegado en la PC remota!");
+            } catch (error) {
+                console.error("Error al pegar:", error);
+            }
         });
     </script>
 </body>

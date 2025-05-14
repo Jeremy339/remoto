@@ -8,7 +8,7 @@ import hashlib
 import secrets
 from io import BytesIO
 from PIL import ImageGrab
-from flask import Flask, Response, render_template, request, session, redirect, url_for
+from flask import Flask, Response, render_template, request, session, redirect, url_for, jsonify
 from flask_socketio import SocketIO
 from cryptography.fernet import Fernet
 from pynput.mouse import Button, Controller as MouseController
@@ -20,6 +20,7 @@ app = Flask(__name__)
 app.secret_key = secrets.token_hex(32)
 socketio = SocketIO(app, cors_allowed_origins="*")
 mouse = MouseController()
+clipboard_text = ""
 
 # Configuración de seguridad
 AUTH_TOKEN = hashlib.sha256(secrets.token_bytes(32)).hexdigest()
@@ -156,6 +157,16 @@ def handle_disconnect():
     if client_id in connected_clients:
         connected_clients.pop(client_id)
         print(f"Cliente desconectado: {client_id}")
+# -------------------------- Recibir Texto ------------------------------------
+@app.route('/set_clipboard', methods=['POST'])
+def set_clipboard():
+    global clipboard_text
+    clipboard_text = request.json.get('text', '')
+    return jsonify({"status": "success"})
+# ------------------------- Enviar Texto --------------------------------------
+@app.route('/get_clipboard', methods=['GET'])
+def get_clipboard():
+    return jsonify({"text": clipboard_text})
 
 # ------------------------- Transferencia de Archivos -------------------------
 def handle_file_transfer():
