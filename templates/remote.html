@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Escritorio Remoto</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #222;
+            color: white;
+        }
+
+        #remoteScreen {
+            display: block;
+            margin: 10px auto;
+            max-width: 95%;
+            max-height: 80vh;
+            border: 2px solid #444;
+        }
+
+        .controls {
+            text-align: center;
+            padding: 10px;
+            background: #333;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            margin: 0 5px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        #status {
+            margin-top: 5px;
+            font-size: 14px;
+        }
+
+        .header {
+            background: #333;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h2>Escritorio Remoto</h2>
+        <button id="logoutBtn">Cerrar Sesión</button>
+    </div>
+
+    <img id="remoteScreen" src="">
+
+    <div class="controls">
+        <button id="refreshBtn">Actualizar Conexión</button>
+        <button id="fileBtn">Enviar Archivo</button>
+        <input type="file" id="fileInput" style="display: none;">
+        <div id="status">Conectado - Esperando imagen...</div>
+    </div>
+
+    <script>
+        const socket = io();
+        const screenImg = document.getElementById('remoteScreen');
+        const fileInput = document.getElementById('fileInput');
+        const fileBtn = document.getElementById('fileBtn');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const statusDiv = document.getElementById('status');
+        const REMOTE_SCREEN_WIDTH = window.screen.width;  // Ancho real de la pantalla remota
+        const REMOTE_SCREEN_HEIGHT = window.screen.height; // Alto real de la pantalla remota
+
+
+        // MÁXIMO TAMAÑO DE ARCHIVO (por ejemplo, 5 MB)
+        const MAX_FILE_SIZE = 5 * 1024 * 1024;
+
+        // Mostrar imagen remota
+        socket.on('screen_update', function (data) {
+            try {
+                // Si `data.image` ya es base64, no necesitas `atob`
+                screenImg.src = 'data:image/jpeg;base64,' + data.image;
+                statusDiv.textContent = `Conectado - ${new Date().toLocaleTimeString()}`;
+            } catch (e) {
+                console.error('Error al mostrar imagen:', e);
+                statusDiv.textContent = 'Error mostrando imagen';
+            }
+        });
+
+        // Botones
+        fileBtn.addEventListener('click', () => fileInput.click());
+        logoutBtn.addEventListener('click', () => window.location.href = '/logout');
+        refreshBtn.addEventListener('click', () => location.reload());
+
+        // Manejo de archivo
+        fileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            if (file.size > MAX_FILE_SIZE) {
+                alert(`Archivo demasiado grande. Máximo permitido: ${formatBytes(MAX_FILE_SIZE)}`);
+                return;
+            }
+
+            statusDiv.textContent = 'Enviando archivo...';
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const arrayBuffer = event.target.result;
+                const uint8Array = new Uint8Array(arrayBuffer);
+
+                const metadata = {
+                    name: file.name,
+                    size: file.size,
+                    type: file.type
+                };
+
+                try {
+                    socket.emit('file_metadata', metadata);
+                    socket.emit('file_chunk', { data: Array.from(uint8Array) });
+
+                    statusDiv.textContent = `Archivo enviado: ${file.name}`;
+                } catch (error) {
+                    console.error('Error enviando archivo:', error);
+                    statusDiv.textContent = 'Error enviando archivo';
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // --- Reemplaza los eventos del mouse por esto ---
+        document.getElementById('remoteScreen').addEventListener('mousedown', (e) => {
+            const rect = e.target.getBoundingClientRect();
+            // Normalizar coordenadas (escalar a la resolución remota)
+            const x = ((e.clientX - rect.left) / rect.width) * REMOTE_SCREEN_WIDTH;
+            const y = ((e.clientY - rect.top) / rect.height) * REMOTE_SCREEN_HEIGHT;
+            socket.emit('mouse_event', { type: 'down', x, y, button: e.button });
+        });
+
+        document.getElementById('remoteScreen').addEventListener('mouseup', (e) => {
+            const rect = e.target.getBoundingClientRect();
+            const x = ((e.clientX - rect.left) / rect.width) * REMOTE_SCREEN_WIDTH;
+            const y = ((e.clientY - rect.top) / rect.height) * REMOTE_SCREEN_HEIGHT;
+            socket.emit('mouse_event', { type: 'up', x, y, button: e.button });
+        });
+
+        document.getElementById('remoteScreen').addEventListener('mousemove', (e) => {
+            const rect = e.target.getBoundingClientRect();
+            const x = ((e.clientX - rect.left) / rect.width) * REMOTE_SCREEN_WIDTH;
+            const y = ((e.clientY - rect.top) / rect.height) * REMOTE_SCREEN_HEIGHT;
+            socket.emit('mouse_event', { type: 'move', x, y });
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Información de Red</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f5f5f5; }
+        .container {
+            background: white;
+            width: 80%;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        ul { list-style-type: none; padding: 0; }
+        li { margin: 10px 0; }
+        a { 
+            color: #4CAF50; 
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .btn {
+            display: inline-block;
+            background: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Información de Conexión</h2>
+        <p>Conéctate desde otra máquina en la misma red usando:</p>
+        
+        <ul>
+            {% for ip in ips %}
+            <li><a href="http://{{ ip }}:5000/remote" target="_blank">http://{{ ip }}:5000/remote</a></li>
+            {% endfor %}
+        </ul>
+        
+        <p>Comparte esta información con el dispositivo que se conectará.</p>
+        
+        <a href="{{ url_for('remote_desktop') }}" class="btn">Ir al Escritorio Remoto</a>
+    </div>
+</body>
+</html>
