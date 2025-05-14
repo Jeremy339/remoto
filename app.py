@@ -12,6 +12,7 @@ from flask import Flask, Response, render_template, request, session, redirect, 
 from flask_socketio import SocketIO
 from cryptography.fernet import Fernet
 from pynput.mouse import Button, Controller as MouseController
+from screeninfo import get_monitors  # Añade esta importación
 
 
 # Configuración inicial
@@ -52,6 +53,13 @@ def get_local_ips():
     except Exception as e:
         print(f"Error obteniendo IP local: {e}")
     return ips or ["127.0.0.1"]
+
+# ------------------------- Ajustar Res ---------------------------
+# Agrega esta ruta para obtener la resolución
+@app.route('/get_resolution')
+def get_resolution():
+    monitor = get_monitors()[0]  # Pantalla principal
+    return {'width': monitor.width, 'height': monitor.height}
 
 # ------------------------- Autenticación -------------------------
 @app.route('/')

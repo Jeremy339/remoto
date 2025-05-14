@@ -76,12 +76,39 @@
         const refreshBtn = document.getElementById('refreshBtn');
         const logoutBtn = document.getElementById('logoutBtn');
         const statusDiv = document.getElementById('status');
-        const REMOTE_SCREEN_WIDTH = window.screen.width;  // Ancho real de la pantalla remota
-        const REMOTE_SCREEN_HEIGHT = window.screen.height; // Alto real de la pantalla remota
+        // Declarar como let para permitir reasignación
+        let REMOTE_SCREEN_WIDTH = window.screen.width;  // Valor temporal
+        let REMOTE_SCREEN_HEIGHT = window.screen.height; // Valor temporal
+
+        // Obtener la resolución real de la pantalla remota al cargar la página
+        fetch('/get_resolution')
+            .then(response => response.json())
+            .then(data => {
+                REMOTE_SCREEN_WIDTH = data.width;
+                REMOTE_SCREEN_HEIGHT = data.height;
+                console.log("Resolución remota configurada:", REMOTE_SCREEN_WIDTH, "x", REMOTE_SCREEN_HEIGHT);
+            })
+            .catch(error => {
+                console.error("Error al obtener resolución:", error);
+                // Usar valores por defecto si falla (opcional)
+            });
 
 
         // MÁXIMO TAMAÑO DE ARCHIVO (por ejemplo, 5 MB)
         const MAX_FILE_SIZE = 5 * 1024 * 1024;
+
+        // Obtener la resolución real de la pantalla remota al cargar la página
+        fetch('/get_resolution')
+            .then(response => response.json())
+            .then(data => {
+                REMOTE_SCREEN_WIDTH = data.width;
+                REMOTE_SCREEN_HEIGHT = data.height;
+                console.log("Resolución remota configurada:", REMOTE_SCREEN_WIDTH, "x", REMOTE_SCREEN_HEIGHT);
+            })
+            .catch(error => {
+                console.error("Error al obtener resolución:", error);
+                // Usar valores por defecto (window.screen.width/height)
+            });
 
         // Mostrar imagen remota
         socket.on('screen_update', function (data) {
